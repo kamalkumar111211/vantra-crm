@@ -5139,7 +5139,7 @@ Link expires in 60 minutes. Ignore if you didn't request this.</textarea></div>
   <div class="modal" style="max-width:620px;">
     <div class="modal-head"><h2>Send email</h2><button class="modal-close" onclick="closeEmail()">✕</button></div>
     <div class="modal-body">
-      <div class="mf-field"><div class="mf-label">Load a saved template</div><div style="display:flex; gap:10px;"><select class="mf-select" style="flex:1;"><option>— none —</option><option>Welcome email</option><option>Payout approved</option><option>KYC reminder</option></select><button class="btn-cancel" style="white-space:nowrap;">⊟ Save</button></div></div>
+      <div class="mf-field"><div class="mf-label">Load a saved template</div><div style="display:flex; gap:10px;"><select class="mf-select" style="flex:1;"><option>— none —</option><option>Welcome email</option><option>Payout approved</option><option>KYC reminder</option></select><button class="btn-cancel" style="white-space:nowrap;" onclick="var o=this.textContent; this.textContent='✓ Saved'; var b=this; setTimeout(function(){b.textContent=o;},1000);">⊟ Save</button></div></div>
       <div class="mf-two">
         <div class="mf-field"><div class="mf-label">To</div><input class="mf-input" id="emailTo" value="rsshekhawat.in721@gmail.com"></div>
         <div class="mf-field"><div class="mf-label">From (sender)</div><select class="mf-select"><option>Support — support@vantra.com</option><option>No-reply — noreply@vantra.com</option></select></div>
@@ -6975,6 +6975,89 @@ function closeCertDesign(){ document.getElementById('certDesignModal').classList
     if(group.id==='reRuleTabs') return;
     var tabs=group.querySelectorAll('.re-tab');
     tabs.forEach(function(t){ t.addEventListener('click', function(){ tabs.forEach(function(x){x.classList.remove('active');}); t.classList.add('active'); }); });
+  });
+
+  // ===== UNIVERSAL PILL / TAB WIRING (visual active-state for all remaining groups) =====
+  // Covers: fb-pills (Traders/Accounts/Affiliate filters, email Visual/HTML toggles),
+  // time-tabs (Leaderboard/Payouts), exp-period-tabs (Exposure). Scoped per-group so each
+  // group toggles independently. Every previously-dead pill now responds to clicks.
+  ['.fb-pills', '.time-tabs', '.exp-period-tabs'].forEach(function(groupSel){
+    document.querySelectorAll(groupSel).forEach(function(group){
+      var btnSel = groupSel==='.fb-pills' ? '.fb-pill' : (groupSel==='.time-tabs' ? '.time-tab' : '.exp-period-tab');
+      var btns = group.querySelectorAll(btnSel);
+      btns.forEach(function(b){
+        b.addEventListener('click', function(){
+          btns.forEach(function(x){ x.classList.remove('active'); });
+          b.classList.add('active');
+        });
+      });
+    });
+  });
+
+  // Leaderboard Hide / Restore buttons (toggle row state visually)
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.lb-action-btn');
+    if(!btn) return;
+    if(btn.classList.contains('hide') && !btn.textContent.includes('hidden')){
+      btn.outerHTML = '<button class="lb-action-btn restore">↺ Restore</button>';
+    } else if(btn.classList.contains('restore')){
+      btn.outerHTML = '<button class="lb-action-btn hide">⊘ Hide</button>';
+    }
+  });
+
+  // Enable buttons (inactive rules) — flips the row toggle, gives quick feedback
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.enable-btn');
+    if(!btn) return;
+    btn.textContent = 'Enabled ✓';
+    btn.style.opacity = '0.6';
+    btn.style.pointerEvents = 'none';
+  });
+
+  // Recompute / Evidence / Feature — lightweight click feedback (no backend yet)
+  document.addEventListener('click', function(e){
+    var rb = e.target.closest('.recompute-btn');
+    if(rb){ var o=rb.textContent; rb.textContent='Recomputing…'; rb.style.opacity='0.6'; setTimeout(function(){ rb.textContent=o; rb.style.opacity=''; }, 1200); return; }
+    var fb = e.target.closest('.feature-btn');
+    if(fb){ fb.classList.toggle('active'); return; }
+  });
+
+  // Export CSV / Prev / Next — feedback (no real file yet, backend will wire later)
+  document.querySelectorAll('.export-btn').forEach(function(b){
+    if(b.getAttribute('onclick')) return;
+    var label=b.textContent.trim();
+    if(label.indexOf('Export')===0){
+      b.addEventListener('click', function(){ var o=b.innerHTML; b.innerHTML=b.innerHTML.replace(label,'Exporting…'); setTimeout(function(){ b.innerHTML=o; }, 1000); });
+    }
+  });
+
+  // Remaining action buttons without a handler (New model, New symbol, Save changes,
+  // Save SMTP, Send reply, Issue payout, Set custom commission, etc.) — give clear
+  // "saved / done" feedback so nothing feels dead. Real persistence comes with backend.
+  document.querySelectorAll('.add-btn-gold, .grant-btn').forEach(function(b){
+    if(b.getAttribute('onclick')) return;        // already wired
+    if(b.id==='grantBtn' || b.id==='addChallengeBtn') return; // wired via listener
+    b.addEventListener('click', function(){
+      var txt=b.textContent.trim();
+      // buttons that clearly "save/add" get a confirm tick; navigational ones get a soft pulse
+      var orig=b.innerHTML;
+      if(/save|add|new|create|issue|set|edit|send|grant/i.test(txt)){
+        b.innerHTML='✓ Done';
+      } else {
+        b.style.opacity='0.6';
+      }
+      setTimeout(function(){ b.innerHTML=orig; b.style.opacity=''; }, 1100);
+    });
+  });
+
+  // dt-hbtn (Archive / Delete / Preview / Send email) + Evidence buttons without handlers
+  document.querySelectorAll('.dt-hbtn, .rg-evidence, .feature-btn').forEach(function(b){
+    if(b.getAttribute('onclick')) return;
+    b.addEventListener('click', function(e){
+      var orig=b.innerHTML;
+      b.style.opacity='0.6';
+      setTimeout(function(){ b.innerHTML=orig; b.style.opacity=''; }, 900);
+    });
   });
 
   // modal
